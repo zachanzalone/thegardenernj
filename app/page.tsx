@@ -32,10 +32,11 @@ type WPPost = {
 export default function DashboardPage() {
   const [activeSection, setActiveSection] = useState<Section>("established")
   const [showBanner, setShowBanner] = useState(true)
+  const [blogEnabled, setBlogEnabled] = useState(false)
   const [currentDate, setCurrentDate] = useState("")
   const [featuredPost, setFeaturedPost] = useState<WPPost | null>(null)
   const [latestPosts, setLatestPosts] = useState<WPPost[]>([])
-  const [blogEnabled, setBlogEnabled] = useState(false)
+
 
   useEffect(() => {
     fetch("/api/blog/posts")
