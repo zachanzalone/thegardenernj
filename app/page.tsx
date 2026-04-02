@@ -1,6 +1,4 @@
-Here's the complete file. Select all in GitHub and replace with this:
 
-```tsx
 "use client"
 
 import { useState, useEffect } from "react"
