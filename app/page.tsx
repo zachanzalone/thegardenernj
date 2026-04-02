@@ -216,7 +216,7 @@ export default function DashboardPage() {
                         rel="noopener noreferrer"
                         className="hover:underline"
                         dangerouslySetInnerHTML={{ __html: post.title.rendered }}
-                      />
+                      ></a>
                     </h3>
                     <p
                       className="text-sm text-muted-foreground mt-2 line-clamp-2"
