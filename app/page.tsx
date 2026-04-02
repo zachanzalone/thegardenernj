@@ -18,10 +18,34 @@ import { Button } from "@/components/ui/button"
 
 type Section = "established" | "emerging" | "calendar"
 
+type WPPost = {
+  id: number
+  title: { rendered: string }
+  excerpt: { rendered: string }
+  link: string
+  date: string
+  _embedded?: {
+    "wp:featuredmedia"?: Array<{ source_url: string }>
+  }
+}
 export default function DashboardPage() {
   const [activeSection, setActiveSection] = useState<Section>("established")
   const [showBanner, setShowBanner] = useState(true)
   const [currentDate, setCurrentDate] = useState("")
+  const [featuredPost, setFeaturedPost] = useState<WPPost | null>(null)
+  const [latestPosts, setLatestPosts] = useState<WPPost[]>([])
+
+useEffect(() => {
+    fetch("/api/blog/posts")
+      .then(r => r.json())
+      .then(data => {
+        if (data.posts?.length) {
+          setFeaturedPost(data.posts[0])
+          setLatestPosts(data.posts.slice(1, 4))
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     setCurrentDate(new Date().toLocaleDateString("en-US", {
@@ -110,8 +134,108 @@ export default function DashboardPage() {
       </header>
 
       {/* Featured Articles Section */}
+{/* Featured Articles Section */}
       <section className="border-b-2 border-foreground">
         <div className="mx-auto max-w-7xl px-4 md:px-8 py-8">
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Main Feature */}
+            <div className="md:col-span-2 border-r-0 md:border-r border-border md:pr-6">
+              <div className="flex items-center gap-2 mb-3">
+                <FileText className="h-4 w-4 text-primary" />
+                <span className="text-xs uppercase tracking-widest text-primary font-semibold">Featured</span>
+              </div>
+              {featuredPost ? (
+                <a href={featuredPost.link} target="_blank" rel="noopener noreferrer" className="group">
+                  <h2
+                    className="font-display text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-4 group-hover:underline"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                    dangerouslySetInnerHTML={{ __html: featuredPost.title.rendered }}
+                  />
+                  <p
+                    className="text-muted-foreground leading-relaxed mb-4 line-clamp-3"
+                    dangerouslySetInnerHTML={{ __html: featuredPost.excerpt.rendered.replace(/<[^>]+>/g, '') }}
+                  />
+                  {featuredPost._embedded?.["wp:featuredmedia"]?.[0]?.source_url ? (
+                    <img
+                      src={featuredPost._embedded["wp:featuredmedia"][0].source_url}
+                      alt={featuredPost.title.rendered}
+                      className="w-full aspect-[16/9] object-cover rounded"
+                    />
+                  ) : (
+                    <div className="aspect-[16/9] bg-muted rounded flex items-center justify-center">
+                      <FileText className="h-12 w-12 opacity-50" />
+                    </div>
+                  )}
+                </a>
+              ) : (
+                <>
+                  <h2
+                    className="font-display text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-4"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                  >
+                    NJ Music Scene Continues to Thrive
+                  </h2>
+                  <p className="text-muted-foreground leading-relaxed mb-4">
+                    From basement shows in New Brunswick to sold-out nights at the Stone Pony,
+                    the Garden State{"'"}s music community remains one of the most vibrant in the country.
+                  </p>
+                  <div className="aspect-[16/9] bg-muted rounded flex items-center justify-center">
+                    <div className="text-center text-muted-foreground">
+                      <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No posts in NJ category yet</p>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Secondary Stories */}
+            <div className="space-y-6">
+              {latestPosts.length > 0 ? latestPosts.map(post => (
+                <div key={post.id} className="pb-6 border-b border-border last:border-0">
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground">Latest</span>
+                  <h3
+                    className="font-display text-xl font-bold mt-2 leading-tight"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                  >
+                    <a href={post.link} target="_blank" rel="noopener noreferrer" className="hover:underline"
+                      dangerouslySetInnerHTML={{ __html: post.title.rendered }}
+                    />
+                  </h3>
+                  <p
+                    className="text-sm text-muted-foreground mt-2 line-clamp-2"
+                    dangerouslySetInnerHTML={{ __html: post.excerpt.rendered.replace(/<[^>]+>/g, '') }}
+                  />
+                </div>
+              )) : (
+                <>
+                  <div className="pb-6 border-b border-border">
+                    <span className="text-xs uppercase tracking-widest text-muted-foreground">Latest</span>
+                    <h3 className="font-display text-xl font-bold mt-2 leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
+                      Local Venues Report Record Attendance
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-2">Asbury Park venues see surge in concert-goers as summer approaches.</p>
+                  </div>
+                  <div className="pb-6 border-b border-border">
+                    <span className="text-xs uppercase tracking-widest text-muted-foreground">Profile</span>
+                    <h3 className="font-display text-xl font-bold mt-2 leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
+                      Rising Stars: The Next Generation
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-2">Meet the emerging artists shaping NJ{"'"}s sound.</p>
+                  </div>
+                  <div>
+                    <span className="text-xs uppercase tracking-widest text-muted-foreground">Opinion</span>
+                    <h3 className="font-display text-xl font-bold mt-2 leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
+                      Why the Shore Sound Endures
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-2">A reflection on decades of musical heritage.</p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>        <div className="mx-auto max-w-7xl px-4 md:px-8 py-8">
           <div className="grid md:grid-cols-3 gap-6">
             {/* Main Feature */}
             <div className="md:col-span-2 border-r-0 md:border-r border-border md:pr-6">
