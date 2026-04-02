@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -30,6 +29,10 @@ type WPPost = {
   }
 }
 
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]+>/g, "")
+}
+
 export default function DashboardPage() {
   const [activeSection, setActiveSection] = useState<Section>("established")
   const [showBanner, setShowBanner] = useState(true)
@@ -40,8 +43,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetch("/api/blog/posts")
-      .then(r => r.json())
-      .then(data => {
+      .then((r) => r.json())
+      .then((data) => {
         if (data.posts?.length) {
           setFeaturedPost(data.posts[0])
           setLatestPosts(data.posts.slice(1, 4))
@@ -60,8 +63,8 @@ export default function DashboardPage() {
         Authorization: `Bearer ${sbKey}`,
       },
     })
-      .then(r => r.json())
-      .then(data => {
+      .then((r) => r.json())
+      .then((data) => {
         if (data?.[0]) {
           setBlogEnabled(data[0].value === true || data[0].value === "true")
         }
@@ -106,11 +109,7 @@ export default function DashboardPage() {
               >
                 Subscribe
               </Button>
-              <button
-                onClick={() => setShowBanner(false)}
-                className="p-1 hover:bg-primary-foreground/10 rounded"
-                aria-label="Dismiss banner"
-              >
+              <button onClick={() => setShowBanner(false)} className="p-1 hover:bg-primary-foreground/10 rounded" aria-label="Dismiss banner">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -150,28 +149,22 @@ export default function DashboardPage() {
         <section className="border-b-2 border-foreground">
           <div className="mx-auto max-w-7xl px-4 md:px-8 py-8">
             <div className="grid md:grid-cols-3 gap-6">
+
               <div className="md:col-span-2 border-r-0 md:border-r border-border md:pr-6">
                 <div className="flex items-center gap-2 mb-3">
                   <FileText className="h-4 w-4 text-primary" />
                   <span className="text-xs uppercase tracking-widest text-primary font-semibold">Featured</span>
                 </div>
                 {featuredPost ? (
-                  <a href={featuredPost.link} target="_blank" rel="noopener noreferrer" className="group">
-                    <h2
-                      className="font-display text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-4 group-hover:underline"
-                      style={{ fontFamily: "var(--font-display)" }}
-                    >
-                      {featuredPost.title.rendered.replace(/<[^>]+>/g, "")}
+                  <a href={featuredPost.link} target="_blank" rel="noopener noreferrer" className="group block">
+                    <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-4 group-hover:underline" style={{ fontFamily: "var(--font-display)" }}>
+                      {stripHtml(featuredPost.title.rendered)}
                     </h2>
                     <p className="text-muted-foreground leading-relaxed mb-4 line-clamp-3">
-                      {featuredPost.excerpt.rendered.replace(/<[^>]+>/g, "")}
+                      {stripHtml(featuredPost.excerpt.rendered)}
                     </p>
                     {featuredPost._embedded?.["wp:featuredmedia"]?.[0]?.source_url ? (
-                      <img
-                        src={featuredPost._embedded["wp:featuredmedia"][0].source_url}
-                        alt={featuredPost.title.rendered.replace(/<[^>]+>/g, "")}
-                        className="w-full aspect-video object-cover rounded"
-                      />
+                      <img src={featuredPost._embedded["wp:featuredmedia"][0].source_url} alt={stripHtml(featuredPost.title.rendered)} className="w-full aspect-video object-cover rounded" />
                     ) : (
                       <div className="aspect-video bg-muted rounded flex items-center justify-center">
                         <FileText className="h-12 w-12 opacity-50" />
@@ -180,10 +173,7 @@ export default function DashboardPage() {
                   </a>
                 ) : (
                   <div>
-                    <h2
-                      className="font-display text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-4"
-                      style={{ fontFamily: "var(--font-display)" }}
-                    >
+                    <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-4" style={{ fontFamily: "var(--font-display)" }}>
                       NJ Music Scene Continues to Thrive
                     </h2>
                     <p className="text-muted-foreground leading-relaxed mb-4">
@@ -201,20 +191,14 @@ export default function DashboardPage() {
 
               <div className="space-y-6">
                 {latestPosts.length > 0 ? (
-                  latestPosts.map(post => (
+                  latestPosts.map((post) => (
                     <div key={post.id} className="pb-6 border-b border-border last:border-0">
                       <span className="text-xs uppercase tracking-widest text-muted-foreground">Latest</span>
-                      
-                        href={post.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:underline font-display text-xl font-bold mt-2 leading-tight block"
-                        style={{ fontFamily: "var(--font-display)" }}
-                      >
-                        {post.title.rendered.replace(/<[^>]+>/g, "")}
+                      <a href={post.link} target="_blank" rel="noopener noreferrer" className="hover:underline font-display text-xl font-bold mt-2 leading-tight block" style={{ fontFamily: "var(--font-display)" }}>
+                        {stripHtml(post.title.rendered)}
                       </a>
                       <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                        {post.excerpt.rendered.replace(/<[^>]+>/g, "")}
+                        {stripHtml(post.excerpt.rendered)}
                       </p>
                     </div>
                   ))
@@ -222,28 +206,23 @@ export default function DashboardPage() {
                   <div>
                     <div className="pb-6 border-b border-border">
                       <span className="text-xs uppercase tracking-widest text-muted-foreground">Latest</span>
-                      <p className="font-display text-xl font-bold mt-2 leading-tight" style={{ fontFamily: "var(--font-display)" }}>
-                        Local Venues Report Record Attendance
-                      </p>
+                      <p className="font-display text-xl font-bold mt-2 leading-tight" style={{ fontFamily: "var(--font-display)" }}>Local Venues Report Record Attendance</p>
                       <p className="text-sm text-muted-foreground mt-2">Asbury Park venues see surge in concert-goers as summer approaches.</p>
                     </div>
                     <div className="pb-6 border-b border-border">
                       <span className="text-xs uppercase tracking-widest text-muted-foreground">Profile</span>
-                      <p className="font-display text-xl font-bold mt-2 leading-tight" style={{ fontFamily: "var(--font-display)" }}>
-                        Rising Stars: The Next Generation
-                      </p>
+                      <p className="font-display text-xl font-bold mt-2 leading-tight" style={{ fontFamily: "var(--font-display)" }}>Rising Stars: The Next Generation</p>
                       <p className="text-sm text-muted-foreground mt-2">Meet the emerging artists shaping NJ&apos;s sound.</p>
                     </div>
                     <div>
                       <span className="text-xs uppercase tracking-widest text-muted-foreground">Opinion</span>
-                      <p className="font-display text-xl font-bold mt-2 leading-tight" style={{ fontFamily: "var(--font-display)" }}>
-                        Why the Shore Sound Endures
-                      </p>
+                      <p className="font-display text-xl font-bold mt-2 leading-tight" style={{ fontFamily: "var(--font-display)" }}>Why the Shore Sound Endures</p>
                       <p className="text-sm text-muted-foreground mt-2">A reflection on decades of musical heritage.</p>
                     </div>
                   </div>
                 )}
               </div>
+
             </div>
           </div>
         </section>
@@ -256,13 +235,11 @@ export default function DashboardPage() {
               onClick={() => setActiveSection("established")}
               className={cn(
                 "flex items-center gap-1 sm:gap-2 text-xs sm:text-sm uppercase tracking-wider sm:tracking-widest transition-colors whitespace-nowrap",
-                activeSection === "established"
-                  ? "text-foreground font-semibold border-b-2 border-primary pb-1"
-                  : "text-muted-foreground hover:text-foreground"
+                activeSection === "established" ? "text-foreground font-semibold border-b-2 border-primary pb-1" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Shows & Releases</span>
+              <span className="hidden sm:inline">Shows &amp; Releases</span>
               <span className="sm:hidden">Shows</span>
             </button>
             <span className="text-border hidden sm:inline">|</span>
@@ -270,9 +247,7 @@ export default function DashboardPage() {
               onClick={() => setActiveSection("emerging")}
               className={cn(
                 "flex items-center gap-1 sm:gap-2 text-xs sm:text-sm uppercase tracking-wider sm:tracking-widest transition-colors whitespace-nowrap",
-                activeSection === "emerging"
-                  ? "text-foreground font-semibold border-b-2 border-primary pb-1"
-                  : "text-muted-foreground hover:text-foreground"
+                activeSection === "emerging" ? "text-foreground font-semibold border-b-2 border-primary pb-1" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Users className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -284,9 +259,7 @@ export default function DashboardPage() {
               onClick={() => setActiveSection("calendar")}
               className={cn(
                 "flex items-center gap-1 sm:gap-2 text-xs sm:text-sm uppercase tracking-wider sm:tracking-widest transition-colors whitespace-nowrap",
-                activeSection === "calendar"
-                  ? "text-foreground font-semibold border-b-2 border-primary pb-1"
-                  : "text-muted-foreground hover:text-foreground"
+                activeSection === "calendar" ? "text-foreground font-semibold border-b-2 border-primary pb-1" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -295,10 +268,7 @@ export default function DashboardPage() {
             {blogEnabled && (
               <>
                 <span className="text-border hidden sm:inline">|</span>
-                <Link
-                  href="/blog"
-                  className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm uppercase tracking-wider sm:tracking-widest transition-colors text-muted-foreground hover:text-foreground whitespace-nowrap"
-                >
+                <Link href="/blog" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm uppercase tracking-wider sm:tracking-widest transition-colors text-muted-foreground hover:text-foreground whitespace-nowrap">
                   <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
                   Blog
                 </Link>
@@ -310,12 +280,13 @@ export default function DashboardPage() {
 
       <main className="flex-1 py-8">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
+
           {activeSection === "established" && (
             <div>
               <div className="text-center mb-8 pb-4 border-b-2 border-foreground">
                 <p className="text-xs tracking-widest uppercase text-muted-foreground mb-2">This Week in New Jersey</p>
                 <h2 className="font-display text-3xl md:text-4xl font-bold tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
-                  Shows, Releases & What&apos;s Trending
+                  Shows, Releases &amp; What&apos;s Trending
                 </h2>
               </div>
               <div className="grid lg:grid-cols-12 gap-8">
@@ -382,6 +353,7 @@ export default function DashboardPage() {
               <CalendarView />
             </div>
           )}
+
         </div>
       </main>
 
@@ -436,4 +408,3 @@ export default function DashboardPage() {
     </div>
   )
 }
-```
