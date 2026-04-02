@@ -208,16 +208,18 @@ export default function DashboardPage() {
                   <div key={post.id} className="pb-6 border-b border-border last:border-0">
                     <span className="text-xs uppercase tracking-widest text-muted-foreground">Latest</span>
                     <h3
-                      className="font-display text-xl font-bold mt-2 leading-tight"
-                      style={{ fontFamily: 'var(--font-display)' }}
+                    className="font-display text-xl font-bold mt-2 leading-tight"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                  >
+                    
+                      href={post.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:underline"
                     >
-                      
-                        href={post.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:underline"
-                        dangerouslySetInnerHTML={{ __html: post.title.rendered }}
-                      ></a>
+                      {post.title.rendered.replace(/<[^>]+>/g, '')}
+                    </a>
+                  </h3>
                     </h3>
                     <p
                       className="text-sm text-muted-foreground mt-2 line-clamp-2"
