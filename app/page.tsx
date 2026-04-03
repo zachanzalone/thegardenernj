@@ -397,9 +397,7 @@ export default function DashboardPage() {
               <span className="text-primary">*</span>
               <span>Jersey City</span>
             </div>
-            <p className="mt-6 text-xs text-muted-foreground/60">
-              Connect a data source to populate this dashboard with real show dates, releases, and events.
-            </p>
+
           </div>
         </div>
       </footer>
