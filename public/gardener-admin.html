@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Gardener — Admin</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Playfair+Display:wght@400;600;700;900&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&display=swap');
+
+  :root {
+    --ink: #1a1a18;
+    --paper: #f5f0e8;
+    --cream: #ede8da;
+    --accent: #8b1a1a;
+    --gold: #b8860b;
+    --muted: #6b6560;
+    --border: #c8bfaa;
+    --success: #2d6a2d;
+    --warning: #8b6914;
+    --danger: #8b1a1a;
+    --sidebar-w: 220px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Serif 4', Georgia, serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* SIDEBAR */
+  #sidebar {
+    width: var(--sidebar-w);
+    background: var(--ink);
+    color: var(--paper);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    overflow-y: auto;
+  }
+
+  .sidebar-masthead {
+    padding: 24px 16px 20px;
+    border-bottom: 1px solid #333;
+    text-align: center;
+  }
+
+  .sidebar-masthead .logo {
+    font-family: 'UnifrakturMaguntia', cursive;
+    font-size: 22px;
+    color: var(--paper);
+    line-height: 1.1;
+  }
+
+  .sidebar-masthead .sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #888;
+    margin-top: 4px;
+  }
+
+  .nav-section {
+    padding: 12px 0 4px;
+  }
+
+  .nav-section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #555;
+    padding: 0 16px 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 16px;
+    cursor: pointer;
+    font-family: 'Source Serif 4', serif;
+    font-size: 13px;
+    color: #aaa;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+  }
+
+  .nav-item:hover { background: #252525; color: var(--paper); }
+  .nav-item.active { background: #252525; color: var(--paper); border-left-color: var(--accent); }
+  .nav-item .icon { font-size: 14px; width: 18px; text-align: center; }
+
+  /* MAIN */
+  #main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .topbar {
+    background: var(--paper);
+    border-bottom: 2px solid var(--ink);
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .topbar .status {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .topbar .status.connected { color: var(--success); }
+  .topbar .status.disconnected { color: var(--danger); }
+
+  /* PANELS */
+  .panel {
+    display: none;
+    padding: 32px;
+    flex: 1;
+  }
+  .panel.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* FORMS */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  .form-grid.full { grid-template-columns: 1fr; }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field.span2 { grid-column: span 2; }
+  .field.span3 { grid-column: span 3; }
+
+  label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  input, select, textarea {
+    font-family: 'Source Serif 4', serif;
+    font-size: 14px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 2px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input:focus, select:focus, textarea:focus { border-color: var(--ink); }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* BUTTONS */
+  .btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 9px 18px;
+    border: none;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+  }
+
+  .btn-primary { background: var(--ink); color: var(--paper); }
+  .btn-primary:hover { background: #333; }
+  .btn-accent { background: var(--accent); color: white; }
+  .btn-accent:hover { background: #a02020; }
+  .btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--ink); }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+  .btn-danger:hover { background: var(--danger); color: white; }
+  .btn-success { background: var(--success); color: white; }
+  .btn-sm { padding: 5px 10px; font-size: 10px; }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+  /* TABLE */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 2px solid var(--border);
+    background: var(--cream);
+  }
+  .data-table td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .data-table tr:hover td { background: var(--cream); }
+  .data-table .actions { display: flex; gap: 6px; }
+
+  /* BADGES */
+  .badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 20px;
+    display: inline-block;
+  }
+  .badge-green { background: #d4edda; color: var(--success); }
+  .badge-red { background: #f8d7da; color: var(--danger); }
+  .badge-yellow { background: #fff3cd; color: var(--warning); }
+  .badge-gray { background: #e9ecef; color: var(--muted); }
+  .badge-blue { background: #d1ecf1; color: #0c5460; }
+
+  /* TOGGLE */
+  .toggle-wrap { display: flex; align-items: center; gap: 10px; }
+  .toggle {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    background: #ccc;
+    border-radius: 11px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border: none;
+    padding: 0;
+  }
+  .toggle.on { background: var(--success); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    background: white;
+    border-radius: 50%;
+    top: 3px; left: 3px;
+    transition: transform 0.2s;
+  }
+  .toggle.on::after { transform: translateX(18px); }
+  .toggle-label { font-size: 13px; }
+
+  /* STATS ROW */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: white;
+    border: 1px solid var(--border);
+    padding: 18px 20px;
+    border-radius: 2px;
+  }
+  .stat-card .num {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .stat-card .lbl {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ALERT */
+  .alert {
+    padding: 12px 16px;
+    border-radius: 2px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .alert.show { display: block; }
+  .alert-success { background: #d4edda; color: var(--success); border: 1px solid #c3e6cb; }
+  .alert-error { background: #f8d7da; color: var(--danger); border: 1px solid #f5c6cb; }
+  .alert-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+
+  /* EMPTY STATE */
+  .empty {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* SECTION DIVIDER */
+  .section-rule {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+  }
+
+  /* MOVEMENT INDICATORS */
+  .up { color: var(--success); }
+  .down { color: var(--danger); }
+  .stable { color: var(--muted); }
+
+  /* LOADING */
+  .loading { text-align: center; padding: 32px; color: var(--muted); font-style: italic; font-size: 14px; }
+
+  /* CONFIG PANEL */
+  .config-note {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-masthead">
+    <div class="logo">The Gardener</div>
+    <div class="sub">Admin Console</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Overview</div>
+    <div class="nav-item active" onclick="showPanel('dashboard')">
+      <span class="icon">◈</span> Dashboard
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Content</div>
+    <div class="nav-item" onclick="showPanel('shows')">
+      <span class="icon">♪</span> Shows
+    </div>
+    <div class="nav-item" onclick="showPanel('artists')">
+      <span class="icon">★</span> Artists
+    </div>
+    <div class="nav-item" onclick="showPanel('venues')">
+      <span class="icon">⌂</span> Venues
+    </div>
+    <div class="nav-item" onclick="showPanel('releases')">
+      <span class="icon">◎</span> Releases
+    </div>
+    <div class="nav-item" onclick="showPanel('trending')">
+      <span class="icon">↑</span> Trending Songs
+    </div>
+    <div class="nav-item" onclick="showPanel('player')">
+      <span class="icon">▶</span> Music Player
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Community</div>
+    <div class="nav-item" onclick="showPanel('submissions')">
+      <span class="icon">✉</span> Submissions
+    </div>
+    <div class="nav-item" onclick="showPanel('subscribers')">
+      <span class="icon">◉</span> Subscribers
+    </div>
+    <div class="nav-item" onclick="showPanel('scraper')">
+      <span class="icon">⟳</span> Scrape Accounts
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">System</div>
+    <div class="nav-item" onclick="showPanel('settings')">
+      <span class="icon">⚙</span> Site Settings
+    </div>
+    <div class="nav-item" onclick="showPanel('config')">
+      <span class="icon">⌗</span> Configuration
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="topbar">
+    <h1 id="panel-title">Dashboard</h1>
+    <span class="status disconnected" id="conn-status">● Not connected</span>
+  </div>
+
+  <!-- GLOBAL ALERT -->
+  <div style="padding: 0 32px; padding-top: 16px;">
+    <div class="alert" id="global-alert"></div>
+  </div>
+
+  <!-- ============ DASHBOARD ============ -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card"><div class="num" id="stat-shows">—</div><div class="lbl">Shows</div></div>
+      <div class="stat-card"><div class="num" id="stat-artists">—</div><div class="lbl">Artists</div></div>
+      <div class="stat-card"><div class="num" id="stat-venues">—</div><div class="lbl">Venues</div></div>
+      <div class="stat-card"><div class="num" id="stat-subs">—</div><div class="lbl">Subscribers</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Quick Status</div>
+      <p style="font-size:14px; color:var(--muted); line-height:1.8;">
+        Configure your Supabase credentials in <strong>Configuration</strong> to load live data.<br>
+        Once connected, this dashboard will show real counts from your database.
+      </p>
+    </div>
+  </div>
+
+  <!-- ============ SHOWS ============ -->
+  <div class="panel" id="panel-shows">
+    <div class="card">
+      <div class="card-title">Add New Show</div>
+      <div class="form-grid">
+        <div class="field"><label>Artist Name</label><input id="show-artist" placeholder="e.g. The Bouncing Souls"></div>
+        <div class="field"><label>Venue</label><input id="show-venue" placeholder="e.g. Stone Pony"></div>
+        <div class="field"><label>Date</label><input type="date" id="show-date"></div>
+        <div class="field"><label>Ticket URL</label><input id="show-ticket" placeholder="https://..."></div>
+        <div class="field"><label>Price</label><input id="show-price" placeholder="e.g. $20"></div>
+        <div class="field"><label>City</label><input id="show-city" placeholder="e.g. Asbury Park"></div>
+        <div class="field span2"><label>Notes</label><input id="show-notes" placeholder="Optional notes"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addShow()">Add Show</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">All Shows <button class="btn btn-ghost btn-sm" onclick="loadShows()">↻ Refresh</button></div>
+      <div id="shows-table"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- ============ ARTISTS ============ -->
+  <div class="panel" id="panel-artists">
+    <div class="card">
+      <div class="card-title">Add New Artist</div>
+      <div class="form-grid">
+        <div class="field"><label>Artist Name</label><input id="art-name" placeholder="e.g. Cyrus Reynolds"></div>
+        <div class="field"><label>Genre</label><input id="art-genre" placeholder="e.g. Indie Rock"></div>
+        <div class="field"><label>Location</label><input id="art-location" placeholder="e.g. Asbury Park, NJ"></div>
+        <div class="field"><label>Instagram Handle</label><input id="art-ig" placeholder="@handle"></div>
+        <div class="field"><label>Spotify URL</label><input id="art-spotify" placeholder="https://open.spotify.com/..."></div>
+        <div class="field"><label>Image URL</label><input id="art-img" placeholder="https://..."></div>
+        <div class="field span2"><label>Bio</label><textarea id="art-bio" placeholder="Short bio..."></textarea></div>
+      </div>
+      <div class="form-grid" style="margin-top:12px;">
+        <div class="field toggle-wrap">
+          <label>Verified</label>
+          <button class="toggle" id="art-verified" onclick="toggleBtn(this)"></button>
+        </div>
+        <div class="field toggle-wrap">
+          <label>Rising Artist (Featured)</label>
+          <button class="toggle" id="art-featured" onclick="toggleBtn(this)"></button>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addArtist()">Add Artist</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">All Artists <button class="btn btn-ghost btn-sm" onclick="loadArtists()">↻ Refresh</button></div>
+      <div id="artists-table"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- ============ VENUES ============ -->
+  <div class="panel" id="panel-venues">
+    <div class="card">
+      <div class="card-title">Add New Venue</div>
+      <div class="form-grid">
+        <div class="field"><label>Venue Name</label><input id="ven-name" placeholder="e.g. The Saint"></div>
+        <div class="field"><label>City</label><input id="ven-city" placeholder="e.g. Asbury Park"></div>
+        <div class="field"><label>Address</label><input id="ven-address" placeholder="123 Main St"></div>
+        <div class="field"><label>Capacity</label><input type="number" id="ven-capacity" placeholder="e.g. 300"></div>
+        <div class="field"><label>Website</label><input id="ven-website" placeholder="https://..."></div>
+        <div class="field"><label>Instagram</label><input id="ven-ig" placeholder="@handle"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addVenue()">Add Venue</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">All Venues <button class="btn btn-ghost btn-sm" onclick="loadVenues()">↻ Refresh</button></div>
+      <div id="venues-table"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- ============ RELEASES ============ -->
+  <div class="panel" id="panel-releases">
+    <div class="card">
+      <div class="card-title">Add New Release</div>
+      <div class="form-grid">
+        <div class="field"><label>Title</label><input id="rel-title" placeholder="Album / EP / Single title"></div>
+        <div class="field"><label>Artist</label><input id="rel-artist" placeholder="Artist name"></div>
+        <div class="field"><label>Release Date</label><input type="date" id="rel-date"></div>
+        <div class="field"><label>Type</label>
+          <select id="rel-type">
+            <option value="single">Single</option>
+            <option value="ep">EP</option>
+            <option value="album">Album</option>
+          </select>
+        </div>
+        <div class="field"><label>Spotify URL</label><input id="rel-spotify" placeholder="https://..."></div>
+        <div class="field"><label>Cover Image URL</label><input id="rel-img" placeholder="https://..."></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addRelease()">Add Release</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">All Releases <button class="btn btn-ghost btn-sm" onclick="loadReleases()">↻ Refresh</button></div>
+      <div id="releases-table"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- ============ TRENDING SONGS ============ -->
+  <div class="panel" id="panel-trending">
+    <div class="card">
+      <div class="card-title">Add Trending Song</div>
+      <div class="form-grid">
+        <div class="field"><label>Song Title</label><input id="tr-title" placeholder="Song name"></div>
+        <div class="field"><label>Artist</label><input id="tr-artist" placeholder="Artist name"></div>
+        <div class="field"><label>Rank</label><input type="number" id="tr-rank" placeholder="1" min="1"></div>
+        <div class="field"><label>Movement</label>
+          <select id="tr-movement">
+            <option value="stable">— Stable</option>
+            <option value="up">↑ Up</option>
+            <option value="down">↓ Down</option>
+          </select>
+        </div>
+        <div class="field"><label>Plays Display</label><input id="tr-plays" placeholder="e.g. 12.4K plays"></div>
+        <div class="field"><label>Artist Origin</label><input id="tr-origin" placeholder="NJ" value="NJ"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addTrending()">Add to Trending</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Current Trending <button class="btn btn-ghost btn-sm" onclick="loadTrending()">↻ Refresh</button></div>
+      <div id="trending-table"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- ============ MUSIC PLAYER ============ -->
+  <div class="panel" id="panel-player">
+    <div class="card">
+      <div class="card-title">Add Song to Player Queue</div>
+      <div class="form-grid">
+        <div class="field"><label>Song Title</label><input id="pl-title" placeholder="Song name"></div>
+        <div class="field"><label>Artist</label><input id="pl-artist" placeholder="Artist name"></div>
+        <div class="field span2"><label>Audio URL (MP3/streaming link)</label><input id="pl-audio" placeholder="https://..."></div>
+        <div class="field"><label>Cover Image URL</label><input id="pl-cover" placeholder="https://..."></div>
+        <div class="field"><label>Duration (seconds)</label><input type="number" id="pl-duration" placeholder="e.g. 213"></div>
+        <div class="field"><label>Sort Order</label><input type="number" id="pl-order" placeholder="0"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addPlayerSong()">Add to Queue</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Player Queue <button class="btn btn-ghost btn-sm" onclick="loadPlayerQueue()">↻ Refresh</button></div>
+      <div id="player-table"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- ============ SUBMISSIONS ============ -->
+  <div class="panel" id="panel-submissions">
+    <div class="card">
+      <div class="card-title">Public Submissions <button class="btn btn-ghost btn-sm" onclick="loadSubmissions()">↻ Refresh</button></div>
+      <div id="submissions-table"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- ============ SUBSCRIBERS ============ -->
+  <div class="panel" id="panel-subscribers">
+    <div class="card">
+      <div class="card-title">Email Subscribers <button class="btn btn-ghost btn-sm" onclick="loadSubscribers()">↻ Refresh</button></div>
+      <div id="subscribers-table"><div class="loading">Loading...</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Add Subscriber Manually</div>
+      <div class="form-grid">
+        <div class="field"><label>Email Address</label><input type="email" id="sub-email" placeholder="email@example.com"></div>
+        <div class="field"><label>Source</label><input id="sub-source" placeholder="manual" value="manual"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addSubscriber()">Add Subscriber</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SCRAPE ACCOUNTS ============ -->
+  <div class="panel" id="panel-scraper">
+    <div class="card">
+      <div class="card-title">Add Scrape Account</div>
+      <div class="form-grid">
+        <div class="field"><label>Handle / Username</label><input id="sc-handle" placeholder="@thegardenernj"></div>
+        <div class="field"><label>Platform</label>
+          <select id="sc-platform">
+            <option value="instagram">Instagram</option>
+            <option value="tiktok">TikTok</option>
+            <option value="bandcamp">Bandcamp</option>
+          </select>
+        </div>
+        <div class="field"><label>Artist Name (optional)</label><input id="sc-artist" placeholder="Links to artist record"></div>
+        <div class="field"><label>Profile URL</label><input id="sc-url" placeholder="https://..."></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addScrapeAccount()">Add Account</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Managed Accounts <button class="btn btn-ghost btn-sm" onclick="loadScrapeAccounts()">↻ Refresh</button></div>
+      <div id="scraper-table"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- ============ SITE SETTINGS ============ -->
+  <div class="panel" id="panel-settings">
+    <div class="card">
+      <div class="card-title">Blog Settings</div>
+      <div class="toggle-wrap" style="margin-bottom:16px;">
+        <button class="toggle" id="blog-toggle" onclick="toggleBlog(this)"></button>
+        <span class="toggle-label">Blog enabled (shows blog tab and hero articles)</span>
+      </div>
+      <p class="config-note">When disabled, the Blog tab and featured article section are hidden from visitors.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveBlogToggle()">Save Blog Setting</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Featured Article</div>
+      <div class="form-grid">
+        <div class="field span2"><label>Headline</label><input id="fa-title" placeholder="Article headline"></div>
+        <div class="field"><label>Category Label</label><input id="fa-category" placeholder="e.g. Featured, Profile, News"></div>
+        <div class="field"><label>Link URL</label><input id="fa-link" placeholder="https://..."></div>
+        <div class="field span2"><label>Excerpt</label><textarea id="fa-excerpt" placeholder="Short description shown under headline..."></textarea></div>
+        <div class="field span2"><label>Image URL</label><input id="fa-image" placeholder="https://..."></div>
+      </div>
+      <div class="toggle-wrap" style="margin-top:12px; margin-bottom:8px;">
+        <button class="toggle" id="fa-published" onclick="toggleBtn(this)"></button>
+        <span class="toggle-label">Published (show on homepage)</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveFeaturedArticle()">Save Featured Article</button>
+        <button class="btn btn-ghost" onclick="loadSiteSettings()">↻ Reload</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CONFIGURATION ============ -->
+  <div class="panel" id="panel-config">
+    <div class="card">
+      <div class="card-title">Supabase Configuration</div>
+      <div class="form-grid full">
+        <div class="field">
+          <label>Supabase Project URL</label>
+          <input id="cfg-url" placeholder="https://xxxxxxxxxxxx.supabase.co">
+        </div>
+        <div class="field">
+          <label>Supabase Anon (Publishable) Key</label>
+          <input id="cfg-key" type="password" placeholder="eyJ...">
+        </div>
+      </div>
+      <p class="config-note">
+        Find these in Supabase → Project Settings → API.<br>
+        Credentials are saved to localStorage in your browser only — never sent anywhere else.
+      </p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveConfig()">Save & Connect</button>
+        <button class="btn btn-danger" onclick="clearConfig()">Clear Credentials</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let SB_URL = '';
+let SB_KEY = '';
+
+function getHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'apikey': SB_KEY,
+    'Authorization': `Bearer ${SB_KEY}`
+  };
+}
+
+async function sbFetch(path, opts = {}) {
+  const res = await fetch(`${SB_URL}/rest/v1/${path}`, {
+    headers: getHeaders(),
+    ...opts
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+// ============================================================
+// NAV
+// ============================================================
+const panelTitles = {
+  dashboard: 'Dashboard', shows: 'Shows', artists: 'Artists',
+  venues: 'Venues', releases: 'Releases', trending: 'Trending Songs',
+  player: 'Music Player Queue', submissions: 'Submissions',
+  subscribers: 'Email Subscribers', scraper: 'Scrape Accounts',
+  settings: 'Site Settings', config: 'Configuration'
+};
+
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick')?.includes(`'${id}'`)) n.classList.add('active');
+  });
+  document.getElementById('panel-title').textContent = panelTitles[id] || id;
+  hideAlert();
+  // Auto-load
+  const loaders = {
+    dashboard: loadDashboard, shows: loadShows, artists: loadArtists,
+    venues: loadVenues, releases: loadReleases, trending: loadTrending,
+    player: loadPlayerQueue, submissions: loadSubmissions,
+    subscribers: loadSubscribers, scraper: loadScrapeAccounts,
+    settings: loadSiteSettings
+  };
+  if (loaders[id] && SB_URL) loaders[id]();
+}
+
+// ============================================================
+// CONFIG
+// ============================================================
+function saveConfig() {
+  SB_URL = document.getElementById('cfg-url').value.trim().replace(/\/$/, '');
+  SB_KEY = document.getElementById('cfg-key').value.trim();
+  if (!SB_URL || !SB_KEY) { showAlert('Please enter both URL and key.', 'error'); return; }
+  localStorage.setItem('gardener_sb_url', SB_URL);
+  localStorage.setItem('gardener_sb_key', SB_KEY);
+  updateConnStatus();
+  showAlert('Connected! Redirecting to dashboard...', 'success');
+  setTimeout(() => showPanel('dashboard'), 1000);
+}
+
+function clearConfig() {
+  localStorage.removeItem('gardener_sb_url');
+  localStorage.removeItem('gardener_sb_key');
+  SB_URL = ''; SB_KEY = '';
+  updateConnStatus();
+  showAlert('Credentials cleared.', 'info');
+}
+
+function updateConnStatus() {
+  const el = document.getElementById('conn-status');
+  if (SB_URL && SB_KEY) {
+    el.textContent = '● Connected';
+    el.className = 'status connected';
+  } else {
+    el.textContent = '● Not connected';
+    el.className = 'status disconnected';
+  }
+}
+
+function loadConfig() {
+  SB_URL = localStorage.getItem('gardener_sb_url') || '';
+  SB_KEY = localStorage.getItem('gardener_sb_key') || '';
+  if (SB_URL) document.getElementById('cfg-url').value = SB_URL;
+  if (SB_KEY) document.getElementById('cfg-key').value = SB_KEY;
+  updateConnStatus();
+}
+
+// ============================================================
+// ALERTS
+// ============================================================
+function showAlert(msg, type = 'success') {
+  const el = document.getElementById('global-alert');
+  el.textContent = msg;
+  el.className = `alert alert-${type} show`;
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+function hideAlert() {
+  document.getElementById('global-alert').classList.remove('show');
+}
+
+// ============================================================
+// TOGGLE HELPER
+// ============================================================
+function toggleBtn(el) {
+  el.classList.toggle('on');
+}
+function isOn(id) {
+  return document.getElementById(id)?.classList.contains('on');
+}
+function setOn(id, val) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (val) el.classList.add('on'); else el.classList.remove('on');
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+async function loadDashboard() {
+  if (!SB_URL) return;
+  try {
+    const [shows, artists, venues, subs] = await Promise.all([
+      sbFetch('shows?select=id'),
+      sbFetch('artists?select=id'),
+      sbFetch('venues?select=id'),
+      sbFetch('email_subscribers?select=id')
+    ]);
+    document.getElementById('stat-shows').textContent = shows?.length ?? 0;
+    document.getElementById('stat-artists').textContent = artists?.length ?? 0;
+    document.getElementById('stat-venues').textContent = venues?.length ?? 0;
+    document.getElementById('stat-subs').textContent = subs?.length ?? 0;
+  } catch(e) { console.error(e); }
+}
+
+// ============================================================
+// SHOWS
+// ============================================================
+async function addShow() {
+  if (!SB_URL) { showAlert('Configure Supabase first.', 'error'); return; }
+  const data = {
+    artist_name: document.getElementById('show-artist').value,
+    venue_name: document.getElementById('show-venue').value,
+    date: document.getElementById('show-date').value,
+    ticket_url: document.getElementById('show-ticket').value,
+    price: document.getElementById('show-price').value,
+    city: document.getElementById('show-city').value,
+    notes: document.getElementById('show-notes').value,
+  };
+  if (!data.artist_name || !data.date) { showAlert('Artist and date are required.', 'error'); return; }
+  try {
+    await sbFetch('shows', { method: 'POST', body: JSON.stringify(data) });
+    showAlert('Show added!');
+    loadShows();
+    ['show-artist','show-venue','show-date','show-ticket','show-price','show-city','show-notes'].forEach(id => document.getElementById(id).value = '');
+  } catch(e) { showAlert('Error: ' + e.message, 'error'); }
+}
+
+async function loadShows() {
+  if (!SB_URL) return;
+  const el = document.getElementById('shows-table');
+  el.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    const data = await sbFetch('shows?order=date.asc');
+    if (!data?.length) { el.innerHTML = '<div class="empty">No shows yet.</div>'; return; }
+    el.innerHTML = `<table class="data-table">
+      <thead><tr><th>Artist</th><th>Venue</th><th>Date</th><th>City</th><th>Featured</th><th>Cancelled</th><th>Actions</th></tr></thead>
+      <tbody>${data.map(s => `
+        <tr>
+          <td><strong>${s.artist_name||''}</strong></td>
+          <td>${s.venue_name||''}</td>
+          <td>${s.date ? new Date(s.date).toLocaleDateString() : ''}</td>
+          <td>${s.city||''}</td>
+          <td><span class="badge ${s.featured ? 'badge-green':'badge-gray'}">${s.featured?'Yes':'No'}</span></td>
+          <td><span class="badge ${s.cancelled ? 'badge-red':'badge-gray'}">${s.cancelled?'Yes':'No'}</span></td>
+          <td class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="toggleField('shows','${s.id}','featured',${s.featured})">Toggle Featured</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteRow('shows','${s.id}',loadShows)">Delete</button>
+          </td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) { el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
+}
+
+// ============================================================
+// ARTISTS
+// ============================================================
+async function addArtist() {
+  if (!SB_URL) { showAlert('Configure Supabase first.', 'error'); return; }
+  const data = {
+    name: document.getElementById('art-name').value,
+    genre: document.getElementById('art-genre').value,
+    location: document.getElementById('art-location').value,
+    instagram_handle: document.getElementById('art-ig').value,
+    spotify_url: document.getElementById('art-spotify').value,
+    image_url: document.getElementById('art-img').value,
+    bio: document.getElementById('art-bio').value,
+    verified: isOn('art-verified'),
+    featured: isOn('art-featured'),
+  };
+  if (!data.name) { showAlert('Artist name is required.', 'error'); return; }
+  try {
+    await sbFetch('artists', { method: 'POST', body: JSON.stringify(data) });
+    showAlert('Artist added!');
+    loadArtists();
+  } catch(e) { showAlert('Error: ' + e.message, 'error'); }
+}
+
+async function loadArtists() {
+  if (!SB_URL) return;
+  const el = document.getElementById('artists-table');
+  el.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    const data = await sbFetch('artists?order=name.asc');
+    if (!data?.length) { el.innerHTML = '<div class="empty">No artists yet.</div>'; return; }
+    el.innerHTML = `<table class="data-table">
+      <thead><tr><th>Name</th><th>Genre</th><th>Location</th><th>Verified</th><th>Rising Artist</th><th>Actions</th></tr></thead>
+      <tbody>${data.map(a => `
+        <tr>
+          <td><strong>${a.name||''}</strong></td>
+          <td>${a.genre||''}</td>
+          <td>${a.location||''}</td>
+          <td><span class="badge ${a.verified?'badge-green':'badge-gray'}">${a.verified?'Yes':'No'}</span></td>
+          <td><span class="badge ${a.featured?'badge-blue':'badge-gray'}">${a.featured?'Yes':'No'}</span></td>
+          <td class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="toggleField('artists','${a.id}','verified',${a.verified})">Toggle Verified</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleField('artists','${a.id}','featured',${a.featured})">Toggle Rising</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteRow('artists','${a.id}',loadArtists)">Delete</button>
+          </td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) { el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
+}
+
+// ============================================================
+// VENUES
+// ============================================================
+async function addVenue() {
+  if (!SB_URL) { showAlert('Configure Supabase first.', 'error'); return; }
+  const data = {
+    name: document.getElementById('ven-name').value,
+    city: document.getElementById('ven-city').value,
+    address: document.getElementById('ven-address').value,
+    capacity: parseInt(document.getElementById('ven-capacity').value) || null,
+    website: document.getElementById('ven-website').value,
+    instagram_handle: document.getElementById('ven-ig').value,
+    status: 'active'
+  };
+  if (!data.name) { showAlert('Venue name is required.', 'error'); return; }
+  try {
+    await sbFetch('venues', { method: 'POST', body: JSON.stringify(data) });
+    showAlert('Venue added!');
+    loadVenues();
+  } catch(e) { showAlert('Error: ' + e.message, 'error'); }
+}
+
+async function loadVenues() {
+  if (!SB_URL) return;
+  const el = document.getElementById('venues-table');
+  el.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    const data = await sbFetch('venues?order=name.asc');
+    if (!data?.length) { el.innerHTML = '<div class="empty">No venues yet.</div>'; return; }
+    el.innerHTML = `<table class="data-table">
+      <thead><tr><th>Name</th><th>City</th><th>Capacity</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>${data.map(v => `
+        <tr>
+          <td><strong>${v.name||''}</strong></td>
+          <td>${v.city||''}</td>
+          <td>${v.capacity||'—'}</td>
+          <td><span class="badge ${v.status==='active'?'badge-green':'badge-red'}">${v.status||'active'}</span></td>
+          <td class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="closeVenue('${v.id}',${v.status==='closed'})">${v.status==='closed'?'Reopen':'Close'}</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteRow('venues','${v.id}',loadVenues)">Delete</button>
+          </td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) { el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
+}
+
+async function closeVenue(id, isClosed) {
+  try {
+    await sbFetch(`venues?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ status: isClosed ? 'active' : 'closed' }) });
+    showAlert(isClosed ? 'Venue reopened.' : 'Venue marked as closed.');
+    loadVenues();
+  } catch(e) { showAlert('Error: ' + e.message, 'error'); }
+}
+
+// ============================================================
+// RELEASES
+// ============================================================
+async function addRelease() {
+  if (!SB_URL) { showAlert('Configure Supabase first.', 'error'); return; }
+  const data = {
+    title: document.getElementById('rel-title').value,
+    artist_name: document.getElementById('rel-artist').value,
+    release_date: document.getElementById('rel-date').value,
+    type: document.getElementById('rel-type').value,
+    spotify_url: document.getElementById('rel-spotify').value,
+    cover_url: document.getElementById('rel-img').value,
+  };
+  if (!data.title || !data.artist_name) { showAlert('Title and artist are required.', 'error'); return; }
+  try {
+    await sbFetch('releases', { method: 'POST', body: JSON.stringify(data) });
+    showAlert('Release added!');
+    loadReleases();
+  } catch(e) { showAlert('Error: ' + e.message, 'error'); }
+}
+
+async function loadReleases() {
+  if (!SB_URL) return;
+  const el = document.getElementById('releases-table');
+  el.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    const data = await sbFetch('releases?order=release_date.desc');
+    if (!data?.length) { el.innerHTML = '<div class="empty">No releases yet.</div>'; return; }
+    el.innerHTML = `<table class="data-table">
+      <thead><tr><th>Title</th><th>Artist</th><th>Type</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody>${data.map(r => `
+        <tr>
+          <td><strong>${r.title||''}</strong></td>
+          <td>${r.artist_name||''}</td>
+          <td><span class="badge badge-blue">${r.type||''}</span></td>
+          <td>${r.release_date ? new Date(r.release_date).toLocaleDateString() : ''}</td>
+          <td class="actions">
+            <button class="btn btn-danger btn-sm" onclick="deleteRow('releases','${r.id}',loadReleases)">Delete</button>
+          </td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) { el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
+}
+
+// ============================================================
+// TRENDING SONGS
+// ============================================================
+async function addTrending() {
+  if (!SB_URL) { showAlert('Configure Supabase first.', 'error'); return; }
+  const data = {
+    title: document.getElementById('tr-title').value,
+    artist: document.getElementById('tr-artist').value,
+    rank: parseInt(document.getElementById('tr-rank').value) || 1,
+    movement: document.getElementById('tr-movement').value,
+    plays_display: document.getElementById('tr-plays').value,
+    artist_origin: document.getElementById('tr-origin').value || 'NJ',
+    active: true
+  };
+  if (!data.title || !data.artist) { showAlert('Title and artist are required.', 'error'); return; }
+  try {
+    await sbFetch('trending_songs', { method: 'POST', body: JSON.stringify(data) });
+    showAlert('Song added to trending!');
+    loadTrending();
+    ['tr-title','tr-artist','tr-rank','tr-plays'].forEach(id => document.getElementById(id).value = '');
+  } catch(e) { showAlert('Error: ' + e.message, 'error'); }
+}
+
+async function loadTrending() {
+  if (!SB_URL) return;
+  const el = document.getElementById('trending-table');
+  el.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    const data = await sbFetch('trending_songs?order=rank.asc');
+    if (!data?.length) { el.innerHTML = '<div class="empty">No trending songs yet.</div>'; return; }
+    el.innerHTML = `<table class="data-table">
+      <thead><tr><th>#</th><th>Title</th><th>Artist</th><th>Movement</th><th>Plays</th><th>Active</th><th>Actions</th></tr></thead>
+      <tbody>${data.map(s => `
+        <tr>
+          <td><strong>${s.rank}</strong></td>
+          <td>${s.title||''}</td>
+          <td>${s.artist||''}</td>
+          <td><span class="${s.movement==='up'?'up':s.movement==='down'?'down':'stable'}">${s.movement==='up'?'↑ Up':s.movement==='down'?'↓ Down':'— Stable'}</span></td>
+          <td>${s.plays_display||'—'}</td>
+          <td><span class="badge ${s.active?'badge-green':'badge-gray'}">${s.active?'Active':'Hidden'}</span></td>
+          <td class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="toggleField('trending_songs','${s.id}','active',${s.active})">Toggle</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteRow('trending_songs','${s.id}',loadTrending)">Delete</button>
+          </td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) { el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
+}
+
+// ============================================================
+// MUSIC PLAYER QUEUE
+// ============================================================
+async function addPlayerSong() {
+  if (!SB_URL) { showAlert('Configure Supabase first.', 'error'); return; }
+  const data = {
+    title: document.getElementById('pl-title').value,
+    artist: document.getElementById('pl-artist').value,
+    audio_url: document.getElementById('pl-audio').value,
+    cover_url: document.getElementById('pl-cover').value,
+    duration_seconds: parseInt(document.getElementById('pl-duration').value) || null,
+    sort_order: parseInt(document.getElementById('pl-order').value) || 0,
+    active: true
+  };
+  if (!data.title || !data.audio_url) { showAlert('Title and audio URL are required.', 'error'); return; }
+  try {
+    await sbFetch('music_player_queue', { method: 'POST', body: JSON.stringify(data) });
+    showAlert('Song added to player!');
+    loadPlayerQueue();
+  } catch(e) { showAlert('Error: ' + e.message, 'error'); }
+}
+
+async function loadPlayerQueue() {
+  if (!SB_URL) return;
+  const el = document.getElementById('player-table');
+  el.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    const data = await sbFetch('music_player_queue?order=sort_order.asc');
+    if (!data?.length) { el.innerHTML = '<div class="empty">No songs in queue yet.</div>'; return; }
+    el.innerHTML = `<table class="data-table">
+      <thead><tr><th>Order</th><th>Title</th><th>Artist</th><th>Duration</th><th>Active</th><th>Actions</th></tr></thead>
+      <tbody>${data.map(s => `
+        <tr>
+          <td>${s.sort_order}</td>
+          <td><strong>${s.title||''}</strong></td>
+          <td>${s.artist||''}</td>
+          <td>${s.duration_seconds ? Math.floor(s.duration_seconds/60)+':'+(s.duration_seconds%60).toString().padStart(2,'0') : '—'}</td>
+          <td><span class="badge ${s.active?'badge-green':'badge-gray'}">${s.active?'Active':'Hidden'}</span></td>
+          <td class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="toggleField('music_player_queue','${s.id}','active',${s.active})">Toggle</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteRow('music_player_queue','${s.id}',loadPlayerQueue)">Delete</button>
+          </td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) { el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
+}
+
+// ============================================================
+// SUBMISSIONS
+// ============================================================
+async function loadSubmissions() {
+  if (!SB_URL) return;
+  const el = document.getElementById('submissions-table');
+  el.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    const data = await sbFetch('submissions?order=submitted_at.desc');
+    if (!data?.length) { el.innerHTML = '<div class="empty">No submissions yet.</div>'; return; }
+    el.innerHTML = `<table class="data-table">
+      <thead><tr><th>Name</th><th>Type</th><th>Details</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody>${data.map(s => `
+        <tr>
+          <td><strong>${s.submitter_name||''}</strong></td>
+          <td>${s.type||''}</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.data ? JSON.stringify(s.data).slice(0,80) : ''}</td>
+          <td><span class="badge ${s.status==='approved'?'badge-green':s.status==='rejected'?'badge-red':'badge-yellow'}">${s.status||'pending'}</span></td>
+          <td>${s.submitted_at ? new Date(s.submitted_at).toLocaleDateString() : ''}</td>
+          <td class="actions">
+            <button class="btn btn-success btn-sm" onclick="updateStatus('submissions','${s.id}','approved')">Approve</button>
+            <button class="btn btn-danger btn-sm" onclick="updateStatus('submissions','${s.id}','rejected')">Reject</button>
+          </td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) { el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
+}
+
+// ============================================================
+// SUBSCRIBERS
+// ============================================================
+async function loadSubscribers() {
+  if (!SB_URL) return;
+  const el = document.getElementById('subscribers-table');
+  el.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    const data = await sbFetch('email_subscribers?order=subscribed_at.desc');
+    if (!data?.length) { el.innerHTML = '<div class="empty">No subscribers yet.</div>'; return; }
+    el.innerHTML = `<table class="data-table">
+      <thead><tr><th>Email</th><th>Source</th><th>Date</th><th>Active</th><th>Actions</th></tr></thead>
+      <tbody>${data.map(s => `
+        <tr>
+          <td>${s.email||''}</td>
+          <td><span class="badge badge-gray">${s.source||'newsletter'}</span></td>
+          <td>${s.subscribed_at ? new Date(s.subscribed_at).toLocaleDateString() : ''}</td>
+          <td><span class="badge ${s.active?'badge-green':'badge-gray'}">${s.active?'Active':'Unsubscribed'}</span></td>
+          <td class="actions">
+            <button class="btn btn-danger btn-sm" onclick="deleteRow('email_subscribers','${s.id}',loadSubscribers)">Remove</button>
+          </td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) { el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
+}
+
+async function addSubscriber() {
+  if (!SB_URL) { showAlert('Configure Supabase first.', 'error'); return; }
+  const data = {
+    email: document.getElementById('sub-email').value,
+    source: document.getElementById('sub-source').value || 'manual',
+    active: true
+  };
+  if (!data.email) { showAlert('Email is required.', 'error'); return; }
+  try {
+    await sbFetch('email_subscribers', { method: 'POST', body: JSON.stringify(data) });
+    showAlert('Subscriber added!');
+    loadSubscribers();
+    document.getElementById('sub-email').value = '';
+  } catch(e) { showAlert('Error: ' + e.message, 'error'); }
+}
+
+// ============================================================
+// SCRAPE ACCOUNTS
+// ============================================================
+async function addScrapeAccount() {
+  if (!SB_URL) { showAlert('Configure Supabase first.', 'error'); return; }
+  const data = {
+    handle: document.getElementById('sc-handle').value,
+    platform: document.getElementById('sc-platform').value,
+    artist_name: document.getElementById('sc-artist').value,
+    profile_url: document.getElementById('sc-url').value,
+    active: true
+  };
+  if (!data.handle) { showAlert('Handle is required.', 'error'); return; }
+  try {
+    await sbFetch('managed_accounts', { method: 'POST', body: JSON.stringify(data) });
+    showAlert('Account added!');
+    loadScrapeAccounts();
+    ['sc-handle','sc-artist','sc-url'].forEach(id => document.getElementById(id).value = '');
+  } catch(e) { showAlert('Error: ' + e.message, 'error'); }
+}
+
+async function loadScrapeAccounts() {
+  if (!SB_URL) return;
+  const el = document.getElementById('scraper-table');
+  el.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    const data = await sbFetch('managed_accounts?order=platform.asc');
+    if (!data?.length) { el.innerHTML = '<div class="empty">No accounts yet.</div>'; return; }
+    el.innerHTML = `<table class="data-table">
+      <thead><tr><th>Handle</th><th>Platform</th><th>Artist</th><th>Active</th><th>Actions</th></tr></thead>
+      <tbody>${data.map(a => `
+        <tr>
+          <td><strong>${a.handle||''}</strong></td>
+          <td><span class="badge badge-blue">${a.platform||''}</span></td>
+          <td>${a.artist_name||'—'}</td>
+          <td><span class="badge ${a.active?'badge-green':'badge-gray'}">${a.active?'Active':'Paused'}</span></td>
+          <td class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="toggleField('managed_accounts','${a.id}','active',${a.active})">Toggle</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteRow('managed_accounts','${a.id}',loadScrapeAccounts)">Remove</button>
+          </td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) { el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
+}
+
+// ============================================================
+// SITE SETTINGS
+// ============================================================
+async function loadSiteSettings() {
+  if (!SB_URL) return;
+  try {
+    const data = await sbFetch('site_settings?select=key,value');
+    if (!data) return;
+    data.forEach(row => {
+      if (row.key === 'blog_enabled') {
+        setOn('blog-toggle', row.value === true || row.value === 'true');
+      }
+      if (row.key === 'featured_article') {
+        const fa = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
+        if (fa.title) document.getElementById('fa-title').value = fa.title;
+        if (fa.category_label) document.getElementById('fa-category').value = fa.category_label;
+        if (fa.excerpt) document.getElementById('fa-excerpt').value = fa.excerpt;
+        if (fa.image_url) document.getElementById('fa-image').value = fa.image_url;
+        if (fa.link_url) document.getElementById('fa-link').value = fa.link_url;
+        setOn('fa-published', fa.published === true);
+      }
+    });
+  } catch(e) { console.error(e); }
+}
+
+function toggleBlog(el) { el.classList.toggle('on'); }
+
+async function saveBlogToggle() {
+  if (!SB_URL) { showAlert('Configure Supabase first.', 'error'); return; }
+  const val = isOn('blog-toggle');
+  try {
+    await sbFetch(`site_settings?key=eq.blog_enabled`, {
+      method: 'PATCH',
+      body: JSON.stringify({ value: val }),
+      headers: { ...getHeaders(), 'Prefer': 'return=minimal' }
+    });
+    showAlert(`Blog ${val ? 'enabled' : 'disabled'}.`);
+  } catch(e) { showAlert('Error: ' + e.message, 'error'); }
+}
+
+async function saveFeaturedArticle() {
+  if (!SB_URL) { showAlert('Configure Supabase first.', 'error'); return; }
+  const fa = {
+    title: document.getElementById('fa-title').value,
+    category_label: document.getElementById('fa-category').value,
+    excerpt: document.getElementById('fa-excerpt').value,
+    image_url: document.getElementById('fa-image').value,
+    link_url: document.getElementById('fa-link').value,
+    published: isOn('fa-published')
+  };
+  try {
+    await sbFetch(`site_settings?key=eq.featured_article`, {
+      method: 'PATCH',
+      body: JSON.stringify({ value: fa }),
+      headers: { ...getHeaders(), 'Prefer': 'return=minimal' }
+    });
+    showAlert('Featured article saved!');
+  } catch(e) { showAlert('Error: ' + e.message, 'error'); }
+}
+
+// ============================================================
+// SHARED HELPERS
+// ============================================================
+async function toggleField(table, id, field, current) {
+  try {
+    await sbFetch(`${table}?id=eq.${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ [field]: !current }),
+      headers: { ...getHeaders(), 'Prefer': 'return=minimal' }
+    });
+    showAlert('Updated.');
+    const loaders = { shows: loadShows, artists: loadArtists, venues: loadVenues, trending_songs: loadTrending, music_player_queue: loadPlayerQueue, managed_accounts: loadScrapeAccounts };
+    if (loaders[table]) loaders[table]();
+  } catch(e) { showAlert('Error: ' + e.message, 'error'); }
+}
+
+async function deleteRow(table, id, reloadFn) {
+  if (!confirm('Delete this record?')) return;
+  try {
+    await sbFetch(`${table}?id=eq.${id}`, { method: 'DELETE' });
+    showAlert('Deleted.');
+    reloadFn();
+  } catch(e) { showAlert('Error: ' + e.message, 'error'); }
+}
+
+async function updateStatus(table, id, status) {
+  try {
+    await sbFetch(`${table}?id=eq.${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+      headers: { ...getHeaders(), 'Prefer': 'return=minimal' }
+    });
+    showAlert(`Marked as ${status}.`);
+    loadSubmissions();
+  } catch(e) { showAlert('Error: ' + e.message, 'error'); }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+loadConfig();
+if (SB_URL) loadDashboard();
+</script>
+</body>
+</html>
