@@ -33,7 +33,6 @@ interface FormData {
   socialLinks: string
   description: string
   additionalInfo: string
-  // Event-specific fields
   eventDate: string
   eventTime: string
   eventEndTime: string
@@ -43,60 +42,91 @@ interface FormData {
   eventAgeRestriction: string
 }
 
+const emptyForm: FormData = {
+  type: "",
+  name: "",
+  email: "",
+  location: "",
+  website: "",
+  socialLinks: "",
+  description: "",
+  additionalInfo: "",
+  eventDate: "",
+  eventTime: "",
+  eventEndTime: "",
+  eventVenue: "",
+  eventPrice: "",
+  eventTicketLink: "",
+  eventAgeRestriction: "",
+}
+
 export function SubmitModal() {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  const [formData, setFormData] = useState<FormData>({
-    type: "",
-    name: "",
-    email: "",
-    location: "",
-    website: "",
-    socialLinks: "",
-    description: "",
-    additionalInfo: "",
-    eventDate: "",
-    eventTime: "",
-    eventEndTime: "",
-    eventVenue: "",
-    eventPrice: "",
-    eventTicketLink: "",
-    eventAgeRestriction: "",
-  })
+  const [formData, setFormData] = useState<FormData>(emptyForm)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Simulate submission - replace with actual API call
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    try {
+      const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const sbKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    setIsSubmitting(false)
-    setIsSubmitted(true)
+      if (!sbUrl || !sbKey) throw new Error("Supabase not configured")
 
-    // Reset after showing success
-    setTimeout(() => {
-      setOpen(false)
-      setIsSubmitted(false)
-      setFormData({
-        type: "",
-        name: "",
-        email: "",
-        location: "",
-        website: "",
-        socialLinks: "",
-        description: "",
-        additionalInfo: "",
-        eventDate: "",
-        eventTime: "",
-        eventEndTime: "",
-        eventVenue: "",
-        eventPrice: "",
-        eventTicketLink: "",
-        eventAgeRestriction: "",
+      const payload = {
+        type: formData.type,
+        submitter_name: formData.name,
+        submitter_email: formData.email,
+        status: "pending",
+        data: {
+          location: formData.location,
+          website: formData.website,
+          social_links: formData.socialLinks,
+          description: formData.description,
+          additional_info: formData.additionalInfo,
+          ...(formData.type === "event" && {
+            event_date: formData.eventDate,
+            event_time: formData.eventTime,
+            event_end_time: formData.eventEndTime,
+            event_venue: formData.eventVenue,
+            event_price: formData.eventPrice,
+            event_ticket_link: formData.eventTicketLink,
+            event_age_restriction: formData.eventAgeRestriction,
+          }),
+        },
+      }
+
+      const res = await fetch(`${sbUrl}/rest/v1/submissions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": sbKey,
+          "Authorization": `Bearer ${sbKey}`,
+          "Prefer": "return=minimal",
+        },
+        body: JSON.stringify(payload),
       })
-    }, 2000)
+
+      if (!res.ok) {
+        const err = await res.text()
+        throw new Error(err)
+      }
+
+      setIsSubmitted(true)
+      setTimeout(() => {
+        setOpen(false)
+        setIsSubmitted(false)
+        setFormData(emptyForm)
+      }, 2000)
+    } catch (err) {
+      console.error("Submission error:", err)
+      alert("Something went wrong. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleChange = (field: keyof FormData, value: string) => {
@@ -155,8 +185,8 @@ export function SubmitModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           size="sm"
           className="gap-2 border-foreground hover:bg-foreground hover:text-background transition-colors"
         >
@@ -166,14 +196,11 @@ export function SubmitModal() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle 
-            className="font-display text-2xl"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
+          <DialogTitle className="font-display text-2xl" style={{ fontFamily: "var(--font-display)" }}>
             Submit to The Gardener
           </DialogTitle>
           <DialogDescription>
-            Are you a venue, band, or artist from New Jersey? Submit your project 
+            Are you a venue, band, or artist from New Jersey? Submit your project
             to be featured in our coverage of the local music scene.
           </DialogDescription>
         </DialogHeader>
@@ -183,7 +210,7 @@ export function SubmitModal() {
             <div className="mx-auto w-16 h-16 rounded-full bg-foreground text-background flex items-center justify-center mb-4">
               <Check className="h-8 w-8" />
             </div>
-            <h3 className="font-display text-xl font-bold mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <h3 className="font-display text-xl font-bold mb-2" style={{ fontFamily: "var(--font-display)" }}>
               Submission Received
             </h3>
             <p className="text-sm text-muted-foreground">
@@ -192,13 +219,9 @@ export function SubmitModal() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-            {/* Submission Type */}
             <div className="space-y-2">
               <Label htmlFor="type">I am submitting as a...</Label>
-              <Select
-                value={formData.type}
-                onValueChange={(value) => handleChange("type", value)}
-              >
+              <Select value={formData.type} onValueChange={(value) => handleChange("type", value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select submission type" />
                 </SelectTrigger>
@@ -215,116 +238,57 @@ export function SubmitModal() {
 
             {formData.type && (
               <>
-                {/* Name */}
                 <div className="space-y-2">
                   <Label htmlFor="name">{placeholders.name}</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => handleChange("name", e.target.value)}
-                    placeholder={placeholders.name}
-                    required
-                  />
+                  <Input id="name" value={formData.name} onChange={(e) => handleChange("name", e.target.value)} placeholder={placeholders.name} required />
                 </div>
 
-                {/* Email */}
                 <div className="space-y-2">
                   <Label htmlFor="email">Contact Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleChange("email", e.target.value)}
-                    placeholder="your@email.com"
-                    required
-                  />
+                  <Input id="email" type="email" value={formData.email} onChange={(e) => handleChange("email", e.target.value)} placeholder="your@email.com" required />
                 </div>
 
-                {/* Location */}
                 <div className="space-y-2">
                   <Label htmlFor="location">Location (City, NJ)</Label>
-                  <Input
-                    id="location"
-                    value={formData.location}
-                    onChange={(e) => handleChange("location", e.target.value)}
-                    placeholder="e.g., Asbury Park, NJ"
-                    required
-                  />
+                  <Input id="location" value={formData.location} onChange={(e) => handleChange("location", e.target.value)} placeholder="e.g., Asbury Park, NJ" required />
                 </div>
 
-                {/* Website */}
                 <div className="space-y-2">
                   <Label htmlFor="website">Website (optional)</Label>
-                  <Input
-                    id="website"
-                    type="url"
-                    value={formData.website}
-                    onChange={(e) => handleChange("website", e.target.value)}
-                    placeholder="https://yourwebsite.com"
-                  />
+                  <Input id="website" type="url" value={formData.website} onChange={(e) => handleChange("website", e.target.value)} placeholder="https://yourwebsite.com" />
                 </div>
 
-                {/* Social Links */}
                 <div className="space-y-2">
                   <Label htmlFor="socialLinks">Social Media Links</Label>
-                  <Input
-                    id="socialLinks"
-                    value={formData.socialLinks}
-                    onChange={(e) => handleChange("socialLinks", e.target.value)}
-                    placeholder="Instagram, Bandcamp, Spotify, etc."
-                  />
+                  <Input id="socialLinks" value={formData.socialLinks} onChange={(e) => handleChange("socialLinks", e.target.value)} placeholder="Instagram, Bandcamp, Spotify, etc." />
                 </div>
 
-                {/* Event-specific fields */}
                 {formData.type === "event" && (
                   <div className="space-y-4 p-4 border border-border rounded-md bg-muted/30">
                     <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                       <CalendarPlus className="h-4 w-4" />
                       Event Details for Calendar
                     </div>
-                    
-                    {/* Date */}
+
                     <div className="space-y-2">
                       <Label htmlFor="eventDate">Event Date *</Label>
-                      <Input
-                        id="eventDate"
-                        type="date"
-                        value={formData.eventDate}
-                        onChange={(e) => handleChange("eventDate", e.target.value)}
-                        required
-                      />
+                      <Input id="eventDate" type="date" value={formData.eventDate} onChange={(e) => handleChange("eventDate", e.target.value)} required />
                     </div>
 
-                    {/* Time */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Label htmlFor="eventTime">Start Time *</Label>
-                        <Input
-                          id="eventTime"
-                          type="time"
-                          value={formData.eventTime}
-                          onChange={(e) => handleChange("eventTime", e.target.value)}
-                          required
-                        />
+                        <Input id="eventTime" type="time" value={formData.eventTime} onChange={(e) => handleChange("eventTime", e.target.value)} required />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="eventEndTime">End Time (optional)</Label>
-                        <Input
-                          id="eventEndTime"
-                          type="time"
-                          value={formData.eventEndTime}
-                          onChange={(e) => handleChange("eventEndTime", e.target.value)}
-                        />
+                        <Input id="eventEndTime" type="time" value={formData.eventEndTime} onChange={(e) => handleChange("eventEndTime", e.target.value)} />
                       </div>
                     </div>
 
-                    {/* Venue */}
                     <div className="space-y-2">
                       <Label htmlFor="eventVenue">Venue *</Label>
-                      <Select
-                        value={formData.eventVenue}
-                        onValueChange={(value) => handleChange("eventVenue", value)}
-                      >
+                      <Select value={formData.eventVenue} onValueChange={(value) => handleChange("eventVenue", value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select venue" />
                         </SelectTrigger>
@@ -344,23 +308,14 @@ export function SubmitModal() {
                       </Select>
                     </div>
 
-                    {/* Price */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Label htmlFor="eventPrice">Ticket Price</Label>
-                        <Input
-                          id="eventPrice"
-                          value={formData.eventPrice}
-                          onChange={(e) => handleChange("eventPrice", e.target.value)}
-                          placeholder="e.g., $15, Free, $10-20"
-                        />
+                        <Input id="eventPrice" value={formData.eventPrice} onChange={(e) => handleChange("eventPrice", e.target.value)} placeholder="e.g., $15, Free, $10-20" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="eventAgeRestriction">Age Restriction</Label>
-                        <Select
-                          value={formData.eventAgeRestriction}
-                          onValueChange={(value) => handleChange("eventAgeRestriction", value)}
-                        >
+                        <Select value={formData.eventAgeRestriction} onValueChange={(value) => handleChange("eventAgeRestriction", value)}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select" />
                           </SelectTrigger>
@@ -373,16 +328,9 @@ export function SubmitModal() {
                       </div>
                     </div>
 
-                    {/* Ticket Link */}
                     <div className="space-y-2">
                       <Label htmlFor="eventTicketLink">Ticket Link (optional)</Label>
-                      <Input
-                        id="eventTicketLink"
-                        type="url"
-                        value={formData.eventTicketLink}
-                        onChange={(e) => handleChange("eventTicketLink", e.target.value)}
-                        placeholder="https://tickets.example.com"
-                      />
+                      <Input id="eventTicketLink" type="url" value={formData.eventTicketLink} onChange={(e) => handleChange("eventTicketLink", e.target.value)} placeholder="https://tickets.example.com" />
                     </div>
 
                     <p className="text-xs text-muted-foreground">
@@ -391,37 +339,17 @@ export function SubmitModal() {
                   </div>
                 )}
 
-                {/* Description */}
                 <div className="space-y-2">
                   <Label htmlFor="description">About</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => handleChange("description", e.target.value)}
-                    placeholder={placeholders.description}
-                    rows={3}
-                    required
-                  />
+                  <Textarea id="description" value={formData.description} onChange={(e) => handleChange("description", e.target.value)} placeholder={placeholders.description} rows={3} required />
                 </div>
 
-                {/* Additional Info */}
                 <div className="space-y-2">
                   <Label htmlFor="additionalInfo">Additional Information (optional)</Label>
-                  <Textarea
-                    id="additionalInfo"
-                    value={formData.additionalInfo}
-                    onChange={(e) => handleChange("additionalInfo", e.target.value)}
-                    placeholder={placeholders.additionalInfo}
-                    rows={2}
-                  />
+                  <Textarea id="additionalInfo" value={formData.additionalInfo} onChange={(e) => handleChange("additionalInfo", e.target.value)} placeholder={placeholders.additionalInfo} rows={2} />
                 </div>
 
-                {/* Submit Button */}
-                <Button 
-                  type="submit" 
-                  className="w-full gap-2"
-                  disabled={isSubmitting}
-                >
+                <Button type="submit" className="w-full gap-2" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -436,8 +364,8 @@ export function SubmitModal() {
                 </Button>
 
                 <p className="text-xs text-muted-foreground text-center">
-                  Submissions are reviewed by our editorial team. We{"'"}ll reach out 
-                  if we{"'"}d like to feature your project.
+                  Submissions are reviewed by our editorial team. We&apos;ll reach out
+                  if we&apos;d like to feature your project.
                 </p>
               </>
             )}
